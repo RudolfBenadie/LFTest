@@ -1,0 +1,105 @@
+﻿@model HomeViewModel
+@{
+  ViewData["Title"] = "Home Page";
+}
+<div class="text-center">
+  @if (Model.ScrapeSourcesList == null || Model.ScrapeSourcesList.Count == 0)
+  {
+    <div class="row">
+      <div class="col col-8 align-items-center">
+        <div class="card">
+          <div class="card-body">
+            <h1 class="display-4">File upload:</h1>
+            <form method="post" enctype="multipart/form-data" action="">
+              <div class="mb-3">
+                <label for="formFileSm" class="form-label">Please select a file to upload:</label>
+                <input class="form-control form-control" id="formFileSm" type="file" name="files">
+              </div>
+              <div>
+                <input type="submit" value="Upload" />
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="row">
+    @* If the scraping source list is not empty display the list in a table with relevant actions *@
+    @if (Model.ScrapeSourcesList != null && Model.ScrapeSourcesList.Count > 0)
+    {
+    <div class="col col-6">
+      <form method="post">
+        <div class="card">
+          <div class="card-header">
+            <input id="process" type="submit" name="process" value="Process" />
+            <input id="deleteall" type="submit" name="deleteall" value="Delete all" />
+          </div>
+          <div class="card-body">
+            <table class="table table-sm table-dark table-hover">
+              <thead>
+                <tr>
+                  <td>Name</td>
+                  <td>Website</td>
+                  <td>Delete</td>
+                </tr>
+              </thead>
+              <tbody>
+                @for (int i = 0; i < Model.ScrapeSourcesList.Count; i++)
+                {
+                  <tr>
+                    <td>@(Model.ScrapeSourcesList[i].Name)</td>
+                    <td>@(Model.ScrapeSourcesList[i].Website)</td>
+                    <td><input id="@(Model.ScrapeSourcesList[i].Name)" type="submit" name="@(i)" value="Delete" /></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </form>
+    </div>
+    }
+
+    @* If the scraping result list is not empty display the scraping results in a table *@
+    @if (Model.ScrapeResultsList != null && Model.ScrapeResultsList.Count > 0)
+    {
+      <div class="col col-6">
+        <div class="card">
+          <div class="card-header">Scraping results in @Model.ScrapeDuration.ToString(@"ss\.fff")</div>
+          <div class="card-body">
+            <table class="table table-sm table-dark table-hover">
+              <thead>
+                <tr>
+                  <td>Name</td>
+                  <td>Website</td>
+                  <td>HasGoogle</td>
+                  <td>ScanDuration</td>
+                </tr>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td>seconds</td>
+                </tr>
+              </thead>
+              <tbody>
+                @foreach (var item in Model.ScrapeResultsList)
+                {
+                  <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Website</td>
+                    <td>@item.HasGoogle</td>
+                    <td>@item.ScanDuration.ToString(@"ss\.fff")</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+

@@ -1,0 +1,91 @@
+﻿using LFTest.Domain;
+using LFTest.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace LFTest.Controllers
+{
+  public class HomeController : Controller
+  {
+    private readonly ILogger<HomeController> _logger;
+
+    public HomeController(ILogger<HomeController> logger)
+    {
+      _logger = logger;
+    }
+
+    public IActionResult Index()
+    {
+      HomeViewModel homeViewModel = new HomeViewModel();
+      return View(homeViewModel);
+    }
+
+    //
+    // Summary:
+    //  Handler for all incoming POST requests
+    //
+    // Parameters:
+    //  IFormCollection: Form data sent in request body of POST method
+    //
+    // Returns
+    //  Task<IActionResult>
+    //    Response with updated view model
+    //
+    [HttpPost]
+    public async Task<IActionResult> IndexAsync(IFormCollection form)
+    {
+      // Initialise view model and scraper entity
+      HomeViewModel homeViewModel = new HomeViewModel();
+      string scraperString = HttpContext.Session.GetString(Constants.SESSION_KEY_SCRAPER);
+      ScraperEntity scraper = String.IsNullOrEmpty(scraperString) ? new ScraperEntity() : new ScraperEntity(JsonSerializer.Deserialize<List<ScrapeSource>>(scraperString));
+
+      // Get and evaluate the action from the button that was pressed on the web page
+      var action = form.ToList()[0];
+      switch (action.Value)
+      {
+        case Constants.FORM_ACTION_DELETE:
+          scraper.RemoveWebsiteFromScrapeSourcesAt(int.Parse(action.Key));
+          break;
+
+        case Constants.FORM_ACTION_DELETE_ALL:
+          scraper.ClearScrapeSources();
+          break;
+
+        case Constants.FORM_ACTION_PROCESS:
+          await scraper.GoScrapeTheWebAsync();
+          break;
+
+        default:
+          break;
+      }
+
+      // Process the file received in the request if any file has been uploaded
+      if (form.Files.Count > 0)
+      {
+        scraper.ParseFile(form.Files[0]);
+      }
+
+      //Update current state of the view model and session
+      HttpContext.Session.SetString(Constants.SESSION_KEY_SCRAPER, JsonSerializer.Serialize(scraper.GetScrapeSources()));
+      homeViewModel.ScrapeSourcesList = scraper.GetScrapeSources();
+      homeViewModel.ScrapeResultsList = scraper.GetScrapeResults();
+      homeViewModel.ScrapeDuration = scraper.GetScrapeDuration();
+
+      return View(homeViewModel);
+    }
+
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+      return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+  }
+}
