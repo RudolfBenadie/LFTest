@@ -15,7 +15,7 @@ namespace LFTest.Domain
     // Summary:
     //     The ScraperEntity provides the implementation of data structures and functions to manage the scraping of a list of websites.
     //
-    public class ScraperEntity
+    public class ScraperEntity: IScraperEntity
     {
         private List<ScrapeSource> _scrapeSources;
         private List<ScrapeResults> _scrapeResults;
@@ -33,16 +33,6 @@ namespace LFTest.Domain
 
         //
         // Summary:
-        //  Instantiate and return a new ScraperEntity object with scrape sources being injected
-        //
-        public ScraperEntity(List<ScrapeSource> scrapeSources)
-        {
-            _scrapeSources = scrapeSources;
-            _scrapeResults = new List<ScrapeResults>();
-        }
-
-        //
-        // Summary:
         //  Remove an entry from the scraping sources list using the index
         //
         // Parameters:
@@ -53,7 +43,6 @@ namespace LFTest.Domain
         {
             _scrapeSources.RemoveAt(index);
         }
-
 
         //
         // Summary:
@@ -77,6 +66,18 @@ namespace LFTest.Domain
             _scrapeSources.Clear();
         }
 
+        //
+        // Summary:
+        //     Set the list of scraping sources
+        //
+        // Parameters:
+        //   List<ScrapeSource>:
+        //     A list of scraping sources.
+        public void SetScrapeSources(List<ScrapeSource> scrapeSources)
+        {
+            _scrapeSources = scrapeSources;
+        }
+        
         //
         // Summary:
         //     Retrieve the list of scraping sources
@@ -186,5 +187,6 @@ namespace LFTest.Domain
             }
             _scrapeDuration = scrapeTimer.Elapsed;
         }
+
     }
 }

@@ -15,12 +15,22 @@ namespace LFTest.Controllers
   public class HomeController : Controller
   {
     private readonly ILogger<HomeController> _logger;
+    private IScraperEntity _scraper;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, IScraperEntity scraper)
     {
       _logger = logger;
+      _scraper = scraper;
     }
 
+    //
+    // Summary:
+    //  Default handler for incoming GET requests
+    //
+    // Returns
+    //  IActionResult
+    //    Response with home view model
+    //
     public IActionResult Index()
     {
       HomeViewModel homeViewModel = new HomeViewModel();
@@ -36,7 +46,7 @@ namespace LFTest.Controllers
     //
     // Returns
     //  Task<IActionResult>
-    //    Response with updated view model
+    //    Response with updated homr view model
     //
     [HttpPost]
     public async Task<IActionResult> IndexAsync(IFormCollection form)
@@ -44,22 +54,24 @@ namespace LFTest.Controllers
       // Initialise view model and scraper entity
       HomeViewModel homeViewModel = new HomeViewModel();
       string scraperString = HttpContext.Session.GetString(Constants.SESSION_KEY_SCRAPER);
-      ScraperEntity scraper = String.IsNullOrEmpty(scraperString) ? new ScraperEntity() : new ScraperEntity(JsonSerializer.Deserialize<List<ScrapeSource>>(scraperString));
-
+      if (!String.IsNullOrEmpty(scraperString)) {
+        _scraper.SetScrapeSources(JsonSerializer.Deserialize<List<ScrapeSource>>(scraperString));
+      }
+      
       // Get and evaluate the action from the button that was pressed on the web page
       var action = form.ToList()[0];
       switch (action.Value)
       {
         case Constants.FORM_ACTION_DELETE:
-          scraper.RemoveWebsiteFromScrapeSourcesAt(int.Parse(action.Key));
+          _scraper.RemoveWebsiteFromScrapeSourcesAt(int.Parse(action.Key));
           break;
 
         case Constants.FORM_ACTION_DELETE_ALL:
-          scraper.ClearScrapeSources();
+          _scraper.ClearScrapeSources();
           break;
 
         case Constants.FORM_ACTION_PROCESS:
-          await scraper.GoScrapeTheWebAsync();
+          await _scraper.GoScrapeTheWebAsync();
           break;
 
         default:
@@ -69,14 +81,14 @@ namespace LFTest.Controllers
       // Process the file received in the request if any file has been uploaded
       if (form.Files.Count > 0)
       {
-        scraper.ParseFile(form.Files[0]);
+        _scraper.ParseFile(form.Files[0]);
       }
 
       //Update current state of the view model and session
-      HttpContext.Session.SetString(Constants.SESSION_KEY_SCRAPER, JsonSerializer.Serialize(scraper.GetScrapeSources()));
-      homeViewModel.ScrapeSourcesList = scraper.GetScrapeSources();
-      homeViewModel.ScrapeResultsList = scraper.GetScrapeResults();
-      homeViewModel.ScrapeDuration = scraper.GetScrapeDuration();
+      HttpContext.Session.SetString(Constants.SESSION_KEY_SCRAPER, JsonSerializer.Serialize(_scraper.GetScrapeSources()));
+      homeViewModel.ScrapeSourcesList = _scraper.GetScrapeSources();
+      homeViewModel.ScrapeResultsList = _scraper.GetScrapeResults();
+      homeViewModel.ScrapeDuration = _scraper.GetScrapeDuration();
 
       return View(homeViewModel);
     }
